@@ -251,3 +251,57 @@ class StockService:
         except Exception as e:
             logger.exception(f"Error generating analysis: {str(e)}")
             raise
+
+    @staticmethod
+    def get_clarifications(userQuery: str, partialQuery: Dict[str, str]) -> Dict[str, any]:
+        """
+        Determine if any further clarifications are needed and validate data availability.
+        Returns a dict with keys: isComplete, questions, partialQuery
+        """
+        try:
+            # Extract stock info using DSPy
+            extracted = StockService._dspy_service.extract_stock_info(userQuery)
+            
+            # Merge extracted info with existing partial query
+            updated_partial = {
+                'symbol': extracted.symbol or partialQuery.get('symbol', ''),
+                'period': extracted.yfinance_period or partialQuery.get('period', ''),
+                'interval': extracted.yfinance_interval or partialQuery.get('interval', '')
+            }
+
+            # Build clarifying questions based on missing information
+            questions = []
+            if not updated_partial['symbol']:
+                questions.append("Which stock would you like to analyze?")
+            if not updated_partial['period']:
+                questions.append("What time period should I analyze? (e.g., '1y' for one year, '6mo' for six months)")
+            if not updated_partial['interval']:
+                questions.append("What interval would you like the data in? (e.g., '1d' for daily, '1wk' for weekly)")
+
+            # If we have a symbol, validate data availability
+            if updated_partial['symbol'] and len(questions) == 0:
+                try:
+                    # Try fetching minimal data to validate
+                    ticker = yf.Ticker(updated_partial['symbol'])
+                    df = ticker.history(
+                        period='1mo',  # Use minimal period for quick validation
+                        interval=updated_partial['interval'] or '1d'
+                    )
+                    
+                    if len(df) < 2:  # Need at least 2 rows for daily change calculation
+                        questions.append(f"No recent data available for {updated_partial['symbol']}. Please try a different stock symbol.")
+                        updated_partial['symbol'] = ''  # Clear invalid symbol
+                except Exception as e:
+                    logger.warning(f"Error validating stock data: {str(e)}")
+                    questions.append(f"Unable to fetch data for {updated_partial['symbol']}. Please verify the stock symbol.")
+                    updated_partial['symbol'] = ''
+
+            return {
+                "isComplete": len(questions) == 0,
+                "questions": questions,
+                "partialQuery": updated_partial
+            }
+            
+        except Exception as e:
+            logger.exception(f"Error in get_clarifications: {str(e)}")
+            raise

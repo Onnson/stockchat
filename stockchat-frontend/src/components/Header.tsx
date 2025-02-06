@@ -25,7 +25,7 @@ export function Header({ onLogoClick }: HeaderProps) {
           )}
         >
           <TrendingUp className="h-6 w-6 text-primary-600 dark:text-primary-400" />
-          <span>StockChat</span>
+          <span>Chatrade</span>
         </button>
         
         <Button

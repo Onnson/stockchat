@@ -58,6 +58,17 @@ class ApiError extends Error {
   }
 }
 
+export interface ClarifyRequest {
+  userQuery: string;
+  partialQuery: Record<string, string>;
+}
+
+export interface ClarifyResponse {
+  isComplete: boolean;
+  questions: string[];
+  partialQuery: Record<string, string>;
+}
+
 class ApiClient {
   private static CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
   private static RETRY_ATTEMPTS = 3;
@@ -201,6 +212,18 @@ class ApiClient {
         body: JSON.stringify({ message: message }),
       },
       false // Don't cache POST requests
+    );
+  }
+
+  static async clarifyQuery(userQuery: string, partialQuery: Record<string, string>): Promise<ClarifyResponse> {
+    return this.executeRequest(
+      '/stock/clarify',
+      {
+        method: 'POST',
+        headers: this.getDefaultHeaders(),
+        body: JSON.stringify({ userQuery, partialQuery }),
+      },
+      false // Don't cache clarification requests
     );
   }
 

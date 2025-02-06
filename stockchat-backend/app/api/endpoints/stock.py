@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.services.stock_service import StockService
 from app.db.database import get_db
 from app.repositories.analysis_repository import AnalysisRepository
-from app.api.models import StockAnalysisRequest, StockAnalysisResponse
+from app.api.models import StockAnalysisRequest, StockAnalysisResponse, ClarifyRequest, ClarifyResponse
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -80,4 +80,18 @@ async def get_shared_analysis(analysis_id: str, db: Session = Depends(get_db)):
         }
     except Exception as e:
         logger.exception("Error in get_shared_analysis")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/clarify", response_model=ClarifyResponse)
+async def clarify_stock_query(request: ClarifyRequest):
+    try:
+        logger.info(f"Clarifying stock query: {request.userQuery}")
+        result = StockService.get_clarifications(
+            userQuery=request.userQuery,
+            partialQuery=request.partialQuery
+        )
+        logger.debug(f"Clarification result: {result}")
+        return ClarifyResponse(**result)
+    except Exception as e:
+        logger.exception("Error in clarify_stock_query")
         raise HTTPException(status_code=500, detail=str(e)) 

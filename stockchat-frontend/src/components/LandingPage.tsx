@@ -27,10 +27,10 @@ export function LandingPage({ onExampleClick }: LandingPageProps) {
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl md:text-3xl font-bold mb-2 text-gray-900 dark:text-white">
-          Welcome to StockSage AI
+          Welcome to Chatrade!
         </h2>
         <p className="text-gray-600 dark:text-gray-300">
-          Ask me anything about stocks, market trends, or financial analysis. Try these examples:
+          Ask me anything about stocks, market trends, or financial analysis, and start dancing the Cha-Chatrade. Try these examples:
         </p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
