@@ -20,6 +20,11 @@
 - Clarification endpoint (backend)
 - Stock data validation
 
+## Next Steps
+- Review and optimize Nginx configuration
+- Implement additional compression settings if needed
+- Test React Router compatibility
+
 ## In Progress
 - Clarification UI components
 - Frontend-backend integration for clarifications

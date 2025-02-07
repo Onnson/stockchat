@@ -1,35 +1,29 @@
-# techContext
+# Technical Context
 
-## Technologies used
-- **FastAPI** (Python) for serving the backend.  
-- **React (TypeScript)** for frontend UI logic.  
-- **TA-Lib** for technical analysis on stock data.  
-- **DSPy** for language understanding and generation.  
-- **DexScreener** (planned) for on-chain analytics.
-
-## Development setup
-- Each service runs in Docker (see docker-compose.yml).  
-- For local dev, you can run `uvicorn` for backend and `npm run dev` for frontend.  
-- TA-Lib must be installed system-wide or in a suitable Python environment before building.
-
-## Technical constraints
-- DSPy must parse ambiguous queries. The Q&A stage helps provide structure.  
-- On-chain analysis requires new HTTP calls to DexScreener's API.  
-- The system should remain extensible for further data sources.
-
-## Frontend Stack
-- React
-- TypeScript
+## Technologies Used
+### Frontend
+- React 18 with TypeScript
 - TailwindCSS
 - Vite
 - Shadcn UI components
 
-## Backend Stack
-- FastAPI
-- Python
-- DSPy
-- TA-Lib
-- SQLite
+### Backend
+- FastAPI (Python)
+- DSPy for AI pipelines
+- TA-Lib for technical analysis
+- SQLite with SQLAlchemy
+- Multiple AI provider support
+
+## Development Setup
+- Docker containers for services
+- Nginx configuration for frontend
+- Local development with uvicorn/vite
+- Environment variables for API keys
+
+## Technical Constraints
+- Requires at least one AI provider API key
+- TA-Lib system-level installation needed
+- Minimum data requirements for analysis
 
 ## External Dependencies
 - OpenAI API (optional)

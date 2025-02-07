@@ -1,26 +1,24 @@
 # System Patterns
 
 ## Architecture Overview
-The system follows a modern web application architecture with:
-- Containerized microservices (Docker)
-- REST API backend
-- React-based SPA frontend
-- SQLite database for persistence
-- AI integration through multiple provider options
+- Docker-containerized microservices
+- FastAPI backend with DSPy integration
+- React/TypeScript frontend with Shadcn UI
+- SQLite database for analysis persistence
+- Multi-provider AI support (OpenAI, DeepSeek, Gemini)
 
 ## Component Structure
-- Frontend components organized by feature
-- UI components separated from business logic
-- Utility functions isolated in dedicated modules
-- Theme management system
-- API client abstraction
+- Frontend: React components with TypeScript
+- Backend: FastAPI with service/repository pattern
+- AI Layer: DSPy pipelines with multiple LLM support
+- Data Layer: SQLite with SQLAlchemy ORM
 
 ## Key Technical Decisions
-- Use of DSPy for financial analysis pipelines
-- Multiple AI provider support (OpenAI, DeepSeek, Gemini)
-- Docker-based deployment for consistency
-- SQLite for lightweight data storage
-- Component-based frontend architecture 
+- DSPy for financial analysis pipelines
+- TA-Lib for technical analysis
+- yfinance for market data
+- Docker for deployment
+- Nginx for frontend serving
 
 ## How the system is built
 - **FastAPI Backend** for handling requests and serving analysis (stock or crypto).  
