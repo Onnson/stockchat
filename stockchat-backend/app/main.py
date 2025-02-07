@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
@@ -9,7 +10,10 @@ import sys
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title=settings.PROJECT_NAME)
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+)
 
 # Enable CORS
 app.add_middleware(
@@ -19,6 +23,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Use Railway's PORT environment variable if available
+port = int(os.getenv("PORT", settings.PORT))
 
 # Include routers
 app.include_router(stock.router, prefix=f"{settings.API_V1_STR}/stock", tags=["stock"])

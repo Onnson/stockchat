@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8000/api/v1';
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000/api/v1";
 
 export interface StockStats {
   technical: {
@@ -69,28 +69,27 @@ export interface ClarifyResponse {
   partialQuery: Record<string, string>;
 }
 
-class ApiClient {
+export class ApiClient {
   private static CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
   private static RETRY_ATTEMPTS = 3;
   private static RETRY_DELAY = 1000; // 1 second
   private static TIMEOUT = 10000; // 10 seconds
   private static pendingRequests = new Map<string, Promise<ApiResponse>>();
 
-  private static async fetchWithTimeout(
-    input: RequestInfo,
-    init?: RequestInit
-  ): Promise<Response> {
+  private static async fetchWithTimeout(url: string, options: RequestInit, timeout = 10000) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), ApiClient.TIMEOUT);
-
+    const id = setTimeout(() => controller.abort(), timeout);
+    
     try {
-      const response = await fetch(input, {
-        ...init,
-        signal: controller.signal,
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
       });
+      clearTimeout(id);
       return response;
-    } finally {
-      clearTimeout(timeout);
+    } catch (error) {
+      clearTimeout(id);
+      throw error;
     }
   }
 
@@ -215,16 +214,20 @@ class ApiClient {
     );
   }
 
-  static async clarifyQuery(userQuery: string, partialQuery: Record<string, string>): Promise<ClarifyResponse> {
-    return this.executeRequest(
-      '/stock/clarify',
-      {
-        method: 'POST',
-        headers: this.getDefaultHeaders(),
-        body: JSON.stringify({ userQuery, partialQuery }),
+  static async clarifyQuery(query: string, partialQuery: Record<string, string>) {
+    const response = await this.fetchWithTimeout(`${API_BASE}/clarify`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
       },
-      false // Don't cache clarification requests
-    );
+      body: JSON.stringify({ query, partialQuery })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    
+    return response.json();
   }
 
   private static getDefaultHeaders(): HeadersInit {

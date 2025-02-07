@@ -17,6 +17,17 @@
 - Market data processing
 - Research caching
 - Data sharing functionality
+- Clarification endpoint (backend)
+- Stock data validation
+
+## In Progress
+- Clarification UI components
+- Frontend-backend integration for clarifications
+- Async stock data validation
+- Error handling refinements
 
 ## To Be Built
-(Awaiting specific information about planned features or improvements) 
+- Complete clarification flow testing
+- Edge case handling for stock data
+- Frontend dependency resolution
+- Async operation improvements 

@@ -2,16 +2,18 @@ from datetime import datetime, timedelta
 import yfinance as yf
 import pandas as pd
 import talib
-from typing import Tuple, List, Dict, Any
+from typing import Tuple, List, Dict, Any, Optional
 import numpy as np
 import time
 import logging
 from .dspy_service import DspyService
+from concurrent.futures import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 
 class StockService:
     _dspy_service = DspyService()
+    _executor = ThreadPoolExecutor(max_workers=3)  # For async data validation
 
     @staticmethod
     def _period_to_days(period: str) -> int:
@@ -253,6 +255,40 @@ class StockService:
             raise
 
     @staticmethod
+    async def _validate_stock_data(symbol: str, period: Optional[str] = None, interval: Optional[str] = None) -> tuple[bool, str, pd.DataFrame]:
+        """
+        Validate stock data availability.
+        Returns: (is_valid: bool, error_message: str, dataframe: pd.DataFrame)
+        """
+        try:
+            ticker = yf.Ticker(symbol)
+            # Try user's period first, fallback to minimal period
+            validation_period = period if period in ['1d', '5d', '1mo'] else '1mo'
+            validation_interval = interval or '1d'
+            
+            df = ticker.history(
+                period=validation_period,
+                interval=validation_interval
+            )
+            
+            row_count = len(df)
+            logger.debug(f"Fetched {row_count} rows for symbol {symbol} with period {validation_period}")
+            
+            if row_count < 2:
+                return False, f"No recent data available for {symbol} (found {row_count} rows). Please try a different stock symbol.", df
+            
+            return True, "", df
+            
+        except Exception as e:
+            if "Invalid API response" in str(e):
+                return False, f"Invalid symbol {symbol}. Please verify the stock symbol.", pd.DataFrame()
+            elif "failed to fetch" in str(e):
+                return False, f"Network error while fetching data for {symbol}. Please try again.", pd.DataFrame()
+            else:
+                logger.warning(f"Error validating stock data: {str(e)}")
+                return False, f"Unable to fetch data for {symbol}. Please verify the stock symbol.", pd.DataFrame()
+
+    @staticmethod
     def get_clarifications(userQuery: str, partialQuery: Dict[str, str]) -> Dict[str, any]:
         """
         Determine if any further clarifications are needed and validate data availability.
@@ -266,7 +302,8 @@ class StockService:
             updated_partial = {
                 'symbol': extracted.symbol or partialQuery.get('symbol', ''),
                 'period': extracted.yfinance_period or partialQuery.get('period', ''),
-                'interval': extracted.yfinance_interval or partialQuery.get('interval', '')
+                'interval': extracted.yfinance_interval or partialQuery.get('interval', ''),
+                'original_symbol': extracted.symbol or partialQuery.get('original_symbol', '')  # Preserve original input
             }
 
             # Build clarifying questions based on missing information
@@ -278,22 +315,18 @@ class StockService:
             if not updated_partial['interval']:
                 questions.append("What interval would you like the data in? (e.g., '1d' for daily, '1wk' for weekly)")
 
-            # If we have a symbol, validate data availability
+            # If we have a symbol and no other questions, validate data availability
             if updated_partial['symbol'] and len(questions) == 0:
-                try:
-                    # Try fetching minimal data to validate
-                    ticker = yf.Ticker(updated_partial['symbol'])
-                    df = ticker.history(
-                        period='1mo',  # Use minimal period for quick validation
-                        interval=updated_partial['interval'] or '1d'
-                    )
-                    
-                    if len(df) < 2:  # Need at least 2 rows for daily change calculation
-                        questions.append(f"No recent data available for {updated_partial['symbol']}. Please try a different stock symbol.")
-                        updated_partial['symbol'] = ''  # Clear invalid symbol
-                except Exception as e:
-                    logger.warning(f"Error validating stock data: {str(e)}")
-                    questions.append(f"Unable to fetch data for {updated_partial['symbol']}. Please verify the stock symbol.")
+                is_valid, error_msg, _ = await StockService._validate_stock_data(
+                    updated_partial['symbol'],
+                    updated_partial['period'],
+                    updated_partial['interval']
+                )
+                
+                if not is_valid:
+                    questions.append(error_msg)
+                    # Keep original symbol for reference but mark as invalid
+                    updated_partial['original_symbol'] = updated_partial['symbol']
                     updated_partial['symbol'] = ''
 
             return {
