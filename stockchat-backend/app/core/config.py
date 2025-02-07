@@ -10,6 +10,7 @@ class Settings(BaseSettings):
         "http://localhost:3000",  # Alternative local port
         "https://*.netlify.app",  # Netlify domains
         "https://chatrade.app",   # Production domain
+        "https://chatrade.netlify.app",  # Specific Netlify domain
     ]
     
     # Add Railway-specific settings
