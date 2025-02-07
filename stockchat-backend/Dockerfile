@@ -35,8 +35,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code from the correct location
 COPY stockchat-backend/app ./app
 
+# Create startup script
+RUN echo '#!/bin/bash\nport="${PORT:-8000}"\nexec uvicorn app.main:app --host 0.0.0.0 --port "$port"' > /start.sh && \
+    chmod +x /start.sh
+
 # Expose port
 EXPOSE 8000
 
 # Command to run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"] 
+CMD ["/start.sh"] 
