@@ -24,8 +24,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Use Railway's PORT environment variable if available
-port = int(os.getenv("PORT", settings.PORT))
+# Get port from environment with fallback
+port = int(os.environ.get("PORT", "8000"))
 
 # Include routers
 app.include_router(stock.router, prefix=f"{settings.API_V1_STR}/stock", tags=["stock"])
